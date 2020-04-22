@@ -60,6 +60,9 @@ DialogModalPlugin.prototype = {
         this.graphics;
         this.closeBtn;
 
+        /** set current highlight answer */
+        this.currentHighLight = null
+
         // Create the dialog window
         this._createWindow();
     },
@@ -136,13 +139,16 @@ DialogModalPlugin.prototype = {
 
         var x = this.padding + 10 + xAxis;
         var y = this._getGameHeight() - this.windowHeight - this.padding + 10 + yAxis;
+        options.subText && (y += this.text.height);
 
         this[`${key}`] = this.scene.make.text({
             x,
             y,
             text,
             style: {
-                wordWrap: { width: this._getGameWidth() - (this.padding * 2) - 25 },
+                wordWrap: {
+                    width: this._getGameWidth() - (this.padding * 2) - 25
+                },
                 font: '15px Arial'
             }
         });
@@ -162,7 +168,7 @@ DialogModalPlugin.prototype = {
             this[`${key}`].setInteractive();
 
             Object.keys(events).forEach(eventName => {
-                this[`${key}`].on(eventName, events[eventName](this[`${key}`]))
+                this[`${key}`].on(eventName, events[eventName](this[`${key}`], this.currentHighLight))
             })
         }
     },

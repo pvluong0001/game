@@ -3,7 +3,7 @@ const config = {
     width: 800,
     height: 600,
     parent: document.getElementById('game'),
-    scene: [Scene01, Scene02]
+    scene: [Scene01, PickCharacterScene, Scene02]
 }
 
 var game = new Phaser.Game(config);

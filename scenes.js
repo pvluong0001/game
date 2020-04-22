@@ -25,6 +25,15 @@ class Scene01 extends Phaser.Scene {
                 url: `assets/zombie/png/male/Walk (${i + 1}).png`
             })
         })
+
+        /** fake data */
+        this.load.json({
+            key: 'questions',
+            url: 'http://www.json-generator.com/api/json/get/cqSJloBlua?indent=2',
+            xhrSettings: {
+                async: true
+            }
+        })
     }
 
     create() {
@@ -33,7 +42,30 @@ class Scene01 extends Phaser.Scene {
             fill: "yellow"
         })
 
-        this.scene.start('playGame')
+        this.scene.start('pickCharacter')
+    }
+}
+
+class PickCharacterScene extends Phaser.Scene {
+    constructor() {
+        super('pickCharacter');
+    }
+
+    preload() {
+        this.load.image('picker', 'assets/finger-down.png')
+    }
+
+    create() {
+        this.add.text(this.sys.game.config.width / 2 - 70, 20, 'Chọn nhân vật', {
+            font: "25px Arial",
+            fill: "yellow"
+        })
+
+        this.picker = this.add.sprite(300, 300, 'picker')
+        this.picker.setScale(40 / this.textures.get('picker').getSourceImage().height)
+
+
+        // this.scene.start('playGame')
     }
 }
 
@@ -56,7 +88,7 @@ class Scene02 extends Phaser.Scene {
         this.questions = [
             {
                 id: 1,
-                text: 'Question 01',
+                text: 'Question 01 Question 01 Question 01 Question 01 Question 01 Question 01 Question 01 Question 01 Question 01 Question 01',
                 answers: [
                     {
                         id: 1,
@@ -65,6 +97,14 @@ class Scene02 extends Phaser.Scene {
                     {
                         id: 2,
                         text: 'Answer 02'
+                    },
+                    {
+                        id: 3,
+                        text: 'Answer 03'
+                    },
+                    {
+                        id: 4,
+                        text: 'Answer 04'
                     }
                 ]
             },
@@ -141,7 +181,7 @@ class Scene02 extends Phaser.Scene {
                     this.updateCounter()
                     this.sys.game.anims.resumeAll()
                 },
-                dialogSpeed: 7
+                dialogSpeed: 10
             })
 
             const question = this.questions[this.questionIndex];
@@ -150,24 +190,35 @@ class Scene02 extends Phaser.Scene {
                 callback: () => {
                     question.answers.forEach(({id, text}, index) => {
                         this.sys.DialogModalPlugin.setText(text, false, {
-                            yAxis: 30 * (index + 1),
+                            yAxis: 40 * Math.floor(index / 2) + 10,
+                            xAxis: index % 2 === 0 ? (this.sys.game.config.width / 2) : 0,
                             key: `answer_${id}`,
                             customData: {
                                 id
                             },
                             events: {
-                                pointerdown: (object) => {
+                                pointerdown: (object, currentHighLight) => {
                                     console.log('custom_data: ', object.texture.customData);
-    
+
                                     return () => {
                                         object.setStyle({
                                             fontStyle: 'bold',
                                             fill: 'yellow'
                                         })
+
+                                        if(this.currentHighLight) {
+                                            this.currentHighLight.setStyle({
+                                                fontStyle: 'normal',
+                                                fill: 'white'
+                                            })
+                                        }
+
+                                        this.currentHighLight = object;
                                     }
                                 }
                             },
-                            pointer: true
+                            pointer: true,
+                            subText: true
                         })
                     })
                 }
