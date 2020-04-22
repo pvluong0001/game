@@ -2,11 +2,10 @@ var DialogModalPlugin = function (scene, test) {
     // the scene that owns the plugin
     this.scene = scene;
     this.systems = scene.sys;
-    console.log(scene)
 
-    // if (!scene.sys.settings.isBooted) {
+    if (!scene.sys.settings.isBooted) {
         scene.sys.events.once('boot', this.boot, this);
-    // }
+    }
 };
 
 // Register this plugin with the PluginManager
@@ -123,7 +122,7 @@ DialogModalPlugin.prototype = {
         if (animate) {
             this.timedEvent = this.scene.time.addEvent({
                 delay: 150 - (this.dialogSpeed * 30),
-                callback: this._animateText(options.key || 'text'),
+                callback: this._animateText(options),
                 callbackScope: this,
                 loop: true
             });
@@ -131,7 +130,7 @@ DialogModalPlugin.prototype = {
     },
     // Calcuate the position of the text in the dialog window
     _setText: function (text, options) {
-        const {xAxis = 0, yAxis = 0, key = 'text'} = options;
+        const {xAxis = 0, yAxis = 0, key = 'text', pointer = false} = options;
         // Reset the dialog
         if (this[`${key}`]) this[`${key}`].destroy();
 
@@ -147,14 +146,36 @@ DialogModalPlugin.prototype = {
                 font: '15px Arial'
             }
         });
+
+        /** custom data */
+        this[`${key}`].texture.customData = options.customData;
+
+        /** style */
+        if(pointer) {
+            this[`${key}`].on('pointerover', () => this.systems.game.canvas.style.cursor = 'pointer')
+            this[`${key}`].on('pointerout', () => this.systems.game.canvas.style.cursor = 'default')
+        }
+
+        /** events */
+        const {events = null} = options;
+        if(events) {
+            this[`${key}`].setInteractive();
+
+            Object.keys(events).forEach(eventName => {
+                this[`${key}`].on(eventName, events[eventName](this[`${key}`]))
+            })
+        }
     },
     // Slowly displays the text in the window to make it appear animated
-    _animateText: function (key) {
+    _animateText: function (options) {
+        const key = options.keys || 'text'
         return function() {
             this.eventCounter++;
             this[`${key}`].setText(this[`${key}`].text + this.dialog[this.eventCounter - 1]);
             if (this.eventCounter === this.dialog.length) {
                 this.timedEvent.remove();
+
+                options.callback && options.callback();
             }
         }
     },

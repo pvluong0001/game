@@ -41,6 +41,8 @@ class Scene02 extends Phaser.Scene {
     successCount = 0;
     failedCount = 0;
     stopForQuestion = false;
+    questions = [];
+    questionIndex = 0;
 
     constructor() {
         super('playGame');
@@ -49,7 +51,38 @@ class Scene02 extends Phaser.Scene {
 
     preload() {
         this.load.scenePlugin('DialogModalPlugin', 'plugins/dialog_plugin.js');
-        this.plugins.installScenePlugin('DialogModalPlugin')
+
+        /** load data from api */
+        this.questions = [
+            {
+                id: 1,
+                text: 'Question 01',
+                answers: [
+                    {
+                        id: 1,
+                        text: 'Answer 01'
+                    },
+                    {
+                        id: 2,
+                        text: 'Answer 02'
+                    }
+                ]
+            },
+            {
+                id: 2,
+                text: 'Question 02',
+                answers: [
+                    {
+                        id: 3,
+                        text: 'Answer 03'
+                    },
+                    {
+                        id: 4,
+                        text: 'Answer 04'
+                    }
+                ]
+            }
+        ]
     }
 
     create() {
@@ -110,14 +143,63 @@ class Scene02 extends Phaser.Scene {
                 },
                 dialogSpeed: 7
             })
-            this.sys.DialogModalPlugin.setText('Đây là một câu hỏi rất là dài và không có đáp án đâu. Đóng câu hỏi lại thôi!', true)
-            setTimeout(() => {
-                this.sys.DialogModalPlugin.setText('Thử test đáp án thôi', false, {
-                    yAxis: 30,
-                    key: 'aquestion'
-                })
-            }, 3000)
+
+            const question = this.questions[this.questionIndex];
+
+            this.sys.DialogModalPlugin.setText(question.text, true, {
+                callback: () => {
+                    question.answers.forEach(({id, text}, index) => {
+                        this.sys.DialogModalPlugin.setText(text, false, {
+                            yAxis: 30 * (index + 1),
+                            key: `answer_${id}`,
+                            customData: {
+                                id
+                            },
+                            events: {
+                                pointerdown: (object) => {
+                                    console.log('custom_data: ', object.texture.customData);
+    
+                                    return () => {
+                                        object.setStyle({
+                                            fontStyle: 'bold',
+                                            fill: 'yellow'
+                                        })
+                                    }
+                                }
+                            },
+                            pointer: true
+                        })
+                    })
+                }
+            })
+
+
+            // this.sys.DialogModalPlugin.setText('Đây là một câu hỏi rất là dài và không có đáp án đâu. Đóng câu hỏi lại thôi!', true, {
+            //     callback: () => {
+            //         this.sys.DialogModalPlugin.setText('Thử test đáp án thôi', false, {
+            //             yAxis: 30,
+            //             key: 'aquestion',
+            //             events: {
+            //                 pointerdown: (object) => {
+            //                     console.log('custom_data: ', object.texture.customData);
+
+            //                     return () => {
+            //                         object.setStyle({
+            //                             fontStyle: 'bold',
+            //                             fill: 'yellow'
+            //                         })
+            //                     }
+            //                 }
+            //             },
+            //             pointer: true
+            //         })
+            //     }
+            // })
         }
+    }
+
+    getQuestions() {
+        return this.questions[this.questionIndex]
     }
 
     resetZombie(zombie) {
