@@ -9,6 +9,7 @@ class Scene01 extends Phaser.Scene {
         this.load.image('bg02', 'assets/bg02-rz.png')
 
         this.load.image('boy', 'assets/knight/freeknight/png/Run (1).png')
+        this.load.image('girl', 'assets/girl/png/Run (1).png')
         this.load.image('zombie', 'assets/zombie/png/male/Walk (1).png')
 
         /** load plugin */
@@ -26,6 +27,12 @@ class Scene01 extends Phaser.Scene {
             })
         })
 
+        Array(20).fill().map((_, i) => {
+            this.load.image({
+                key: `girl_${i + 1}`,
+                url: `assets/girl/png/Run (${i + 1}).png`
+            })
+        })
         /** fake data */
         this.load.json({
             key: 'questions',
@@ -47,6 +54,10 @@ class Scene01 extends Phaser.Scene {
 }
 
 class PickCharacterScene extends Phaser.Scene {
+    mainCharactor = 'boy';
+    directionDown = true;
+    characterHeight = 200;
+
     constructor() {
         super('pickCharacter');
     }
@@ -56,16 +67,77 @@ class PickCharacterScene extends Phaser.Scene {
     }
 
     create() {
-        this.add.text(this.sys.game.config.width / 2 - 70, 20, 'Chọn nhân vật', {
+        this.add.text(this.sys.game.config.width / 2 - 70, 50, 'Chọn nhân vật', {
             font: "25px Arial",
             fill: "yellow"
         })
 
-        this.picker = this.add.sprite(300, 300, 'picker')
+        this.add.text(this.sys.game.config.width / 2 - 70, this.sys.game.height - 100, 'Nhấn enter để chọn nhân vật', {
+            font: "25px Arial",
+            fill: "yellow"
+        })
+
+        this.cursorKeys = this.input.keyboard.createCursorKeys();
+
+        this.picker = this.add.sprite(300, 200, 'picker')
         this.picker.setScale(40 / this.textures.get('picker').getSourceImage().height)
 
+        this.boy = this.add.sprite(300, 330, 'boy')
+        this.girl = this.add.sprite(500, 330, 'girl')
+        const baseCharacterHeightImage = this.textures.get('boy').getSourceImage().height
+        const baseGirlHeightImage = this.textures.get('girl').getSourceImage().height
+        this.boy.setScale(this.characterHeight / baseCharacterHeightImage);
+        this.girl.setScale((this.characterHeight - 20) / baseGirlHeightImage);
+        this.anims.create({
+            key: 'boy_anim',
+            frames: Array(10).fill().map((_, index) => ({key: `run_${index+1}`})),
+            frameRate: 10,
+            repeat: -1
+        })
 
+        console.log(this.boy)
+
+        this.anims.create({
+            key: 'girl_anim',
+            frames: Array(20).fill().map((_, index) => ({key: `girl_${index+1}`})),
+            frameRate: 16,
+            repeat: -1
+        })
+        this.boy.play('boy_anim')
+        this.girl.play('girl_anim')
+
+        this.input.keyboard.on('keyup-ENTER', () => {
+            this.scene.start('playGame', {
+                charactor: this.mainCharactor
+            })
+        })
         // this.scene.start('playGame')
+    }
+
+    update() {
+        const speed = this.directionDown ? 2 : -2;
+        this.picker.y += speed
+        if(this.picker.y > 220) {
+            this.directionDown = false
+        } else if(this.picker.y < 200) {
+            this.directionDown = true
+        }
+
+        this.pickCharactor()
+    }
+
+    pickCharactor() {
+        if(this.cursorKeys.right.isDown) {
+            if(this.mainCharactor === 'boy') {
+                this.picker.x += 200
+                this.mainCharactor = 'girl'
+            }
+        } else if(this.cursorKeys.left.isDown) {
+            if(this.mainCharactor === 'girl') {
+                this.picker.x -= 200
+                this.mainCharactor = 'boy'
+            }
+        }
     }
 }
 
@@ -75,54 +147,20 @@ class Scene02 extends Phaser.Scene {
     stopForQuestion = false;
     questions = [];
     questionIndex = 0;
+    characterHeight = 200;
+    questions = [];
 
     constructor() {
         super('playGame');
-        this.characterHeight = 200;
+    }
+
+    init(options) {
+        this.options = {...options}
     }
 
     preload() {
         this.load.scenePlugin('DialogModalPlugin', 'plugins/dialog_plugin.js');
-
-        /** load data from api */
-        this.questions = [
-            {
-                id: 1,
-                text: 'Question 01 Question 01 Question 01 Question 01 Question 01 Question 01 Question 01 Question 01 Question 01 Question 01',
-                answers: [
-                    {
-                        id: 1,
-                        text: 'Answer 01'
-                    },
-                    {
-                        id: 2,
-                        text: 'Answer 02'
-                    },
-                    {
-                        id: 3,
-                        text: 'Answer 03'
-                    },
-                    {
-                        id: 4,
-                        text: 'Answer 04'
-                    }
-                ]
-            },
-            {
-                id: 2,
-                text: 'Question 02',
-                answers: [
-                    {
-                        id: 3,
-                        text: 'Answer 03'
-                    },
-                    {
-                        id: 4,
-                        text: 'Answer 04'
-                    }
-                ]
-            }
-        ]
+        this.questions = this.cache.json.get('questions')
     }
 
     create() {
@@ -130,7 +168,8 @@ class Scene02 extends Phaser.Scene {
         this.background.setOrigin(0, 0);
 
         /** boy */
-        this.boy = this.add.sprite(100, 800 - 350, 'boy')
+        this.boy = this.textures.get(this.options.charactor)
+        console.log(this.boy)
         this.zombie = this.add.sprite(this.sys.game.config.width - 150, 800 - 350, 'zombie')
 
         /** scale */
