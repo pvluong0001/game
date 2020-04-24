@@ -3,7 +3,7 @@ const config = {
     width: 800,
     height: 600,
     parent: document.getElementById('game'),
-    scene: [Scene01, PickCharacterScene, Scene02],
+    scene: [PreloadScene, PickCharacterScene, GameScene],
     physics: {
         default: 'arcade',
         arcade: {
